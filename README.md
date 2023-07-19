@@ -72,17 +72,26 @@ I named this new dataframe `calculated_df`. Below are a few rows of this datafra
 Creating this dataframe took 95% of my time on this and required me to solve many challenges. I am not going to dive deep into all the steps it took to create this on the README, but if you open **Data_Constructor.ipynb** I have a very detailed explaination of my process and what each column means. I will however give an overview of the structure. 
 
 Rows: **Individual Games**
+
+
 Each row represents a game that took place in the past three years. Each game will have a "duplicate" entry though. One for each team that played in the game. For instance, if New York played Salt Lake, there will be an entry from the perspective of New York, and another one from the perspective of Salt Lake. This is not repetative though, since the two rows will contain different information. One pertaining to New Yorks stats from the game, and the other about Salt Lakes stats from the game. 
 
 First 5 Columns: **Identifying Information**
+
+
 These columns contain basic information such as the team names, abbreviations, and the date. These will eventually be stripped when training the model since they are not numerical, and I do not want the model to make predictions based on team names. For instance, the New York Empire win almost all their games. The model could easly just start predicting all wins becasue the team name matches "Empire" and the season is "2023". 
 
 Columns 6-9: **Place and Game in Season**
+
+
 Columns 6 describes if it is a home game or not (from perspective of the team name in column one). Columns 7-9 describe how many games the teams have palyed so far in the season, and how many they have played against eachother. This is super important when taking averages. For example, If I am taking the average Completion Percentage over the past 5 games, but they have only played 1 game so far, it might be best to use last seasons average or some other baseline (**Team Averages.csv**). 
+
 
 It also might give the model insight into how serioulsy to take some of the calculated feilds. If there are a low number of games played against a particular opponent, the model can use this data and predict the outcome with less certainty. But, if there have been many games against an opponent it can be confident in using previous game statistics to make a prediction. 
 
+
 Columns 10-70: **Calculated Statistics**
+
 There are 10 different stats I used for these columns:
 
 
@@ -116,23 +125,42 @@ This was a very simple task since the main function used `stat_pct_input` was al
 team1 = "Shred"
 team2 = "Empire"
 date = "7/4/2023"
-home = 1        # 1 for home game, 0 for away game, refers to team1
+home = 1
 audl_input = get_input_data(team1,team2,date,home)
 ```
 
+### Building the Model
+
+Using the **AUDL_pd.csv** data I first split it into testing and training data. I used 10% of the data for testing. I also chose which column the model will be trying to predict. I chose the `Result` column which has a binary result (1 win, 0 loss) for each game.
+
+I chose to use a simple sequential model with Dense nodes and only two hidden layers. The model has an input layer which feeds into hidden Dense layers of 35 and 10. The actiation function I am using here is `relu` to avoid and dissapearing gradients. Also, I am using L2 Regularization to prevent overfitting. This drags the weights of the network towards zero which distributes weights more evenly reducing complexity. Since there is a limited pool of training data, this is very important. The output layer is a single node which has a sigmoid activation. The model is compiled with an `sgd` optimizer function and a loss of `mean_squared_error` since this is a binary classification problem (win or loss). 
+
+```
+model = tf.keras.models.Sequential([
+    Dense(64, activation='relu'),
+    Dense(35,kernel_regularizer=l2(0.01), activation='relu'),
+    #Dropout(.1),
+    Dense(10,kernel_regularizer=l2(0.01), activation='relu'),
+    Dense(1, kernel_regularizer=l2(0.01), activation='sigmoid')
+    ])
+
+model.compile(optimizer='sgd',
+    loss='mean_squared_error',
+    metrics=['accuracy'])
+```
 
 
+### Results
+
+I trained the model with a batch size of 8 over 10 epochs. I used a smaller batch size since I have limited data and want the model to update frequently. 
+
+Analyzing the results of the training, the training accuracy increases to around 74% after only a few epochs where it stabilized. The test accuracy also increases to around this range. Since the training accuracy does not shoot up to near 100%, it shows that overfitting was prevented by teh L2 regularization. Also, the test accuracy is greater than 50% (baseline accuracy) which shows that the model is learning correctly. 
+
+I tried changing the structure of the model and retrianing it. However, the test accuracy was very consistently around 75%. To get the accuracy higher, I need more data.
+
+To test out my model, I tried predicting an upcoming game between the only two undefeated teams left in the AUDL, the Salt Lake Shred and the New York Empire. My model predicted that the Shred had a 33.2% chance of beating Empire. Immediatly after seeing this output I was reassured I was on the right track. This seemed like a very realistic prediction. Sure enough, the Shred lost out to Empire by a few points. I have since used it on many other games, and it is generally accurate!
 
 
-
-
-
-
-
-
-
-
-I used L2 regularization to help with overfitting, and set aside 10% of the data as test data. The accuracy varies, but tends to hover around 75% for both the training and test data sets. 
-
+### Future Plans
 
 Some future steps may be to add more data so that the model can become more realistic. I am only working with 3 years of AUDL data at this point since before that statistics were recorded very differently and would require different code to standardize with the current data. I also hope to eventually inlcude individual player statistics into this model since I think that will give it a higher accuracy. All of the statistics used so far are team averages rather than individual player data. 
