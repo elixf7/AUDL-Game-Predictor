@@ -115,8 +115,7 @@ calculated_df[f'{stat} Against Opponent (Season)'] = stat_pct('Team Name', -1,av
 calculated_df[f'{stat} Opponent Against Home (Season)'] = stat_pct('Opposing Team Name',-1,avgerage_column , avg_index,'Team Name')
 ```
 
-I then stored the resulting dataframe as **ADUL_pd.csv**. This means that **Data_Constructor.ipynb** is only used when you want to add more games to the training dataset. As the current 2023 season continues, 
-
+I then stored the resulting dataframe as **ADUL_pd.csv**. This means that **Data_Constructor.ipynb** is only used when you want to add more games to the training dataset. As the current 2023 season continues, I will continue adding games and updating the csv. 
 
 ### Creating the Input Generator
 In **Input_Generator.ipynb** I defined the function `stat_pct_input` which takes in identifying data (Team1 name, Team2 name, Date, Home or Away), and generates all 70 rows of data in the exact same format as **AUDL_pd.csv**. The only difference is that this is a hypothetical future game, and thus does not have an outcome assigned to it. 
